@@ -114,7 +114,7 @@ function love.draw()
     time_offset = os.difftime(os.time(), start_time)
 
     -- print iteration and seconds remaining
-    love.graphics.setColor(200,200,200)
+    love.graphics.setColor(200, 200, 200)
     love.graphics.print(iteration, 10, 10)
     love.graphics.print(6 - math.floor(time_offset), 10, 25)
 
