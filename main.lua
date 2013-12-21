@@ -16,23 +16,37 @@ function pix(x, y)
 end
 
 
+iteration = 0
+
+
 function init_bodies()
+    iteration = iteration + 1
+
     -- initialize our bodies
     bodies = {}
-    max_bodies = 2000   -- how many bodies we want
+    max_bodies = 5   -- how many bodies we want
 
     -- make warmup time faster, try to minimise function calls
     local screen_width = love.graphics.getWidth()
     local screen_height = love.graphics.getHeight()
 
     -- create our bodies
-    for i = 1, max_bodies do
-        bodies[i] = {
-            pos = vector(math.random(0, screen_width), 
-                         math.random(0, screen_height)),
-            vel = vector(math.random(-10, 10),
-                         math.random(-10, 10)),
-            weight = math.floor(math.random(2, 3)),
+    bodies[1] = {  -- planet
+        pos = vector(screen_width / 2, screen_height / 2),
+        vel = vector(math.random(-2, 2),
+                     math.random(-2, 2)),
+        weight = math.floor(math.random(50, 70)),
+        color = {math.floor(math.random(10, 255)),
+                 math.floor(math.random(10, 255)),
+                 math.floor(math.random(10, 255)), 255},
+    }
+    for i = 2, max_bodies do
+        bodies[i] = {  -- moons
+            pos = vector(math.random(20, screen_width - 20), 
+                         math.random(20, screen_height - 20)),
+            vel = vector(math.random(-2, 2),
+                         math.random(-2, 2)),
+            weight = math.floor(math.random(2, 20)),
             color = {math.floor(math.random(10, 255)),
                      math.floor(math.random(10, 255)),
                      math.floor(math.random(10, 255)), 255},
@@ -55,6 +69,11 @@ end
 
 
 function love.draw()
+    -- keep giant body centred
+    love.graphics.push()
+    love.graphics.translate((love.graphics.getWidth() / 2 - bodies[1].pos.x) - bodies[1].vel.x * 2,
+                            (love.graphics.getHeight() / 2 - bodies[1].pos.y) - bodies[1].vel.y * 2)
+
     -- drawings!
     for i = 1, max_bodies do
 
@@ -65,14 +84,18 @@ function love.draw()
         bodies[i].pos = bodies[i].pos + bodies[i].vel
 
         -- gravity
+        -- NOTE: I suck at gravity
         for j = 1, max_bodies do
-            -- bodies[i].vel:rotate_inplace(bodies[i].vel:angleTo(bodies[j].vel))
-            -- bodies[i].vel + bodies[i].pos:angleTo(bodies[j].pos) -- * 0.00001 * bodies[i].pos:dist(bodies[j].pos) * bodies[j].weight)
+            bodies[i].vel = bodies[i].vel + (bodies[j].pos - bodies[i].pos) * 0.0004 * ((1000 - bodies[i].pos:dist(bodies[j].pos)) * 0.0005) * math.abs(bodies[j].weight * 2 / bodies[i].weight)
         end
     end
 
+    love.graphics.pop()
+    love.graphics.setColor(200,200,200)
+    love.graphics.print(tostring(iteration), 10, 10)
+
     -- refresh!
-    if os.difftime(os.time(), start_time) > 1.5 then
+    if os.difftime(os.time(), start_time) > 3 then
         init_bodies()
         start_time = os.time()
     end
