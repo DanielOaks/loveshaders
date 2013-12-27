@@ -8,5 +8,7 @@
 -- config
 function love.conf(t)
     t.window.title = 'Space Sim'
+    t.version = '0.9.0'
+
     t.window.resizable = true
 end
