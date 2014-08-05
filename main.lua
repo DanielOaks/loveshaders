@@ -15,18 +15,21 @@ end
 
 
 -- libs
-Gamestate = require 'libs.Gamestate'  -- hump
-Vector = require 'libs.Vector'  -- hump
+Gamestate = require 'libs.gamestate'  -- hump
+Vector = require 'libs.vector'  -- hump
 Menu = require 'libs.menuscroll'  -- https://love2d.org/forums/viewtopic.php?f=5&t=3636
 
-Bloom = require 'libs.bloom'  -- slime
-BloomShader = CreateBloomEffect(400, 500)
-BloomShader:debugDraw(true)
+shaders_supported = love.graphics.isSupported and love.graphics.isSupported("canvas") and love.graphics.isSupported("shader")
+if shaders_supported then
+    local shader_data = love.filesystem.read('shaders/dantsc.frag')
+    shader_success, effect = pcall(love.graphics.newShader, shader_data)
+end
 
 fullscreen = false
 
 iteration = 0
 infinite_trace_mode = false
+enable_shaders = true
 
 
 function init_bodies()
@@ -81,14 +84,17 @@ function init_bodies()
 end
 
 
-function draw_bodies()
+function draw_trails()
     -- drawings!
     for i = 1, max_bodies do
         -- drawing current line trace
         love.graphics.setColor(bodies[i].trace_color)
         love.graphics.line(bodies[i].trace)
     end
+end
 
+
+function draw_bodies()
     for i = 1, max_bodies do
         -- drawing current position
         love.graphics.setColor(bodies[i].body_color)
@@ -206,36 +212,94 @@ function game:enter()
 end
 
 
-function game:draw()
-    -- keep giant body centred
-    love.graphics.push()
-    -- love.graphics.translate((love.graphics.getWidth() / 2 - bodies[1].pos.x) - bodies[1].vel.x,
-    --                         (love.graphics.getHeight() / 2 - bodies[1].pos.y) - bodies[1].vel.y)
+-- draws simple rectangles
+function drawrect(x_margin, y_margin, x_border_width, y_border_width)
+    love.graphics.rectangle('fill', x_margin, y_margin, love.graphics.getWidth() - (2 * x_margin), y_border_width)
+    love.graphics.rectangle('fill', x_margin, love.graphics.getHeight() - y_margin - y_border_width, love.graphics.getWidth() - (2 * x_margin), y_border_width)
 
-    BloomShader:predraw()
+    love.graphics.rectangle('fill', x_margin, y_margin, x_border_width, love.graphics.getHeight() - (2 * y_margin))
+    love.graphics.rectangle('fill', love.graphics.getWidth() - x_margin - x_border_width, y_margin, x_border_width, love.graphics.getHeight() - (2 * y_margin))
+end
+
+
+function game:draw()
+    -- shader begin
+    current_canvas = love.graphics.newCanvas()
+    love.graphics.setCanvas(current_canvas)
+
+
+    -- Background
+    love.graphics.setColor(30, 30, 30)
+    love.graphics.rectangle('fill', 0, 0, love.graphics.getWidth(), love.graphics.getHeight())
+
+    -- Borders, really ugly
+    love.graphics.setColor(32, 31, 31)
+    drawrect(30, 30, 40, 40)
+
+    love.graphics.setColor(32, 32, 32)
+    drawrect(30, 30, 30, 30)
+
+    love.graphics.setColor(33, 33, 33)
+    drawrect(30, 30, 20, 20)
+
+    love.graphics.setColor(28, 28, 28)
+    drawrect(30, 30, 2.5, 2.5)
+
+    love.graphics.setColor(29, 29, 28)
+    drawrect(32.5, 32.5, 2.5, 2.5)
+
+    -- Bodies
+    draw_trails()
+    draw_trails()
+    draw_trails()
 
     draw_bodies()
+
     grav_bodies()
 
-    BloomShader:postdraw()
+    -- More borders, ugly hack
+    love.graphics.setColor(20, 20, 20)
+    drawrect(0, 0, 20, 20)
 
-    love.graphics.pop()
+    love.graphics.setColor(50, 50, 50)
+    drawrect(20, 20, 5, 5)
+
+    love.graphics.setColor(60, 60, 60)
+    drawrect(25, 25, 2.5, 2.5)
+
+    love.graphics.setColor(70, 70, 70)
+    drawrect(27.25, 27.25, 2.5, 2.5)
+
 
     time_offset = os.difftime(os.time(), start_time)
-
-    -- print iteration and seconds remaining
-    love.graphics.setColor(200, 200, 200)
-    love.graphics.print([[[i]   Infinite Trace Mode
-[r]   Refresh
-[esc] Menu]], 10, 10)
-    love.graphics.print(iteration, 10, 70)
-    love.graphics.print(16 - math.floor(time_offset), 10, 85)
 
     -- refresh!
     if time_offset > 15.9 then
         init_bodies()
         start_time = os.time()
     end
+
+    -- print iteration and seconds remaining
+    love.graphics.setColor(200, 200, 200)
+    love.graphics.print([[[i]   Infinite Trace Mode
+[r]   Refresh
+[d]   Enable / Disable Shaders
+[esc] Menu]], 40, 40)
+    love.graphics.print(iteration, 40, 80 + (15 * 1))
+    love.graphics.print(16 - math.floor(time_offset), 40, 80 + (15 * 2))
+
+    -- shader error message
+    if shaders_supported and not shader_success then
+        love.graphics.print(effect, 40, 80 + (15 * 3));
+    end
+
+    -- shader cleanup
+    love.graphics.setCanvas()
+    if shaders_supported and shader_success and enable_shaders then
+        love.graphics.setShader(effect)
+    end
+    love.graphics.draw(current_canvas)
+    love.graphics.setShader()
 end
 
 
@@ -243,14 +307,12 @@ function game:keyreleased(key)
     if key == 'escape' then
         Gamestate.switch(menu)
     elseif key == 'i' then
-        if infinite_trace_mode then
-            infinite_trace_mode = false
-        else
-            infinite_trace_mode = true
-        end
+        infinite_trace_mode = not infinite_trace_mode
     elseif key == 'r' then
         init_bodies()
         start_time = os.time()
+    elseif key == 'd' then
+        enable_shaders = not enable_shaders
     end
 end
 

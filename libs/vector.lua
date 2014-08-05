@@ -161,6 +161,11 @@ function vector:mirrorOn(v)
 	return new(s * v.x - self.x, s * v.y - self.y)
 end
 
+function vector:oppositeOfPoint(v)
+	assert(isvector(v), "oppositeOfPoint: wrong argument types (<vector> expected)")
+	return new(self.x + (self.x - v.x), self.y + (self.y - v.y))
+end
+
 function vector:cross(v)
 	assert(isvector(v), "cross: wrong argument types (<vector> expected)")
 	return self.x * v.y - self.y * v.x
