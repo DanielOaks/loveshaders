@@ -1,34 +1,72 @@
 // written by Daniel Oaks <daniel@danieloaks.net>
 // licensed under the BSD 2-clause license
-// attempt at an ntsc-like filter
+// attempt at an ntsc-like filter with a nicer license
+
+extern float time;
+extern vec2 mouse;
 
 #define PI 3.14159265
 
-// How much we distort on the x and y axis
-//  From 0 to 1
+/// Barrel Distortion
+// How much we distort on the x and y axis.
+// From 0 to 1.
 #define BARREL_X_DISTORTION 0.02
 #define BARREL_Y_DISTORTION 0.03
 
-// Takes a point (x, y) and gives us the barrel-distorted position of that point
+// Takes a point (x, y) and returns the barrel-distorted position of that point
 //   x and y must be in the range (-1, 1)
-vec2 barrel_distortion(vec2 original_point)
+vec2 barrel_distortion(vec2 point)
 {
-	vec2 point_out;
+	point.x = point.x + (point.y * point.y) * point.x * BARREL_X_DISTORTION;
+	point.y = point.y + (point.x * point.x) * point.y * BARREL_Y_DISTORTION;
 
-	point_out.x = original_point.x + (original_point.y * original_point.y) * original_point.x * BARREL_X_DISTORTION;
-	point_out.y = original_point.y + (original_point.x * original_point.x) * original_point.y * BARREL_Y_DISTORTION;
-
-	return point_out;
+	return point;
 }
 
 
-// How large our 'pixels' are
-//  You will want to draw most everything in a this-by-this grid if possible
+/// Chromatic Aberration
+// ticks from 1 to however large the generated noise field is below, back
+//   and forth to provide simple, decent-looking CA fairly quickly.
+extern int ca_tick;
+extern int ca_max_tick;
+// this acts as a 'distortion field'.
+// basically, we scroll back and forth across the noise image with ca_tick.
+// this (with perlin noise generating our distortion field), lets us have
+//   a smoothish transition between different CA states, rather than totally
+//   random and unrelated generated CA states each frame, which just ends up
+//   looking silly.
+extern Image ca_noise;
+
+vec4 chromatic_aberration(Image texture, vec2 tex_coords)
+{
+	vec2 noise_coords;
+
+	// get noise values for this pixel, based on time and y
+	noise_coords.y = tex_coords.y;
+	noise_coords.x = float(ca_tick) / float(ca_max_tick);
+	vec4 noise_val = Texel(ca_noise, noise_coords);
+
+	// get distorted rgb
+	vec4 rgb;
+	rgb.r = Texel(texture, tex_coords + noise_val.r).r;
+	rgb.g = Texel(texture, tex_coords + noise_val.g).g;
+	rgb.b = Texel(texture, tex_coords + noise_val.b).b;
+
+	// original alpha
+	rgb.a = Texel(texture, tex_coords).a;
+
+	return rgb;
+}
+
+
+/// Scanlines
+// How large our 'pixels' are.
+// You will want to draw most everything in a this-by-this grid if possible.
 #define PIXEL_SIZE 5.0
-// Opacity of the scanlines, 0 to 1
-#define SCANLINE_OPACITY 0.2
-// How wide the darkened scanlines are in comparison to content
-//  0.5 is same height, 0.8 is mostly scanline, 0.2 is mostly content
+// Opacity of the scanlines, 0 to 1.
+#define SCANLINE_OPACITY 0.13
+// How wide the darkened scanlines are in comparison to content.
+// 0.5 is same height, 0.8 is mostly scanline, 0.2 is mostly content.
 #define SCANLINE_WIDTH 0.65
 
 // Adds fairly standard scanlines to the input image, based on pixel size above
@@ -45,9 +83,10 @@ vec4 scanline_color(vec4 rgb, vec2 pixel_coords)
 }
 
 
+/// Pixel Effect
 vec4 effect(vec4 vcolor, Image texture, vec2 texture_coords, vec2 pixel_coords)
 {
-	// this makes our working coords from -1 to 1, instead of 0 to 1
+	// this makes our working coords go from -1 to 1, instead of 0 to 1
 	vec2 working_coords;
 	working_coords.x = ((texture_coords.x * 2.0) - 1.0);
 	working_coords.y = ((texture_coords.y * -2.0) + 1.0);
@@ -60,15 +99,17 @@ vec4 effect(vec4 vcolor, Image texture, vec2 texture_coords, vec2 pixel_coords)
 	working_tex_coords.x = ((working_coords.x + 1.0) / 2.0);
 	working_tex_coords.y = ((working_coords.y - 1.0) / -2.0);
 
-	// get rgb
-	vec4 rgb = Texel(texture, working_tex_coords);
-	vec4 working_rgb = rgb;
+	// // get normal rgb
+	// vec4 working_rgb = Texel(texture, working_tex_coords);
+
+	// chromatic aberration
+	vec4 working_rgb = chromatic_aberration(texture, working_tex_coords);
 
 	// color bleed, etc
 	// working_rgb = color_bleed(working_rgb, working_tex_coords);
 
-	// color distortion, etc
-	working_rgb = scanline_color(rgb, working_tex_coords);
+	// scanlines
+	working_rgb = scanline_color(working_rgb, working_tex_coords);
 
 	// returning
 	return working_rgb;

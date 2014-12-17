@@ -18,11 +18,17 @@ end
 Gamestate = require 'libs.gamestate'  -- hump
 Vector = require 'libs.vector'  -- hump
 Menu = require 'libs.menuscroll'  -- https://love2d.org/forums/viewtopic.php?f=5&t=3636
+Noise = require 'libs.noise'  -- http://staffwww.itn.liu.se/~stegu/simplexnoise/Noise.lua
 
 shaders_supported = love.graphics.isSupported and love.graphics.isSupported("canvas") and love.graphics.isSupported("shader")
 if shaders_supported then
     local shader_data = love.filesystem.read('shaders/dantsc.frag')
     shader_success, effect = pcall(love.graphics.newShader, shader_data)
+
+    -- print error message to stdout
+    if not shader_success then
+        print(effect)
+    end
 end
 
 fullscreen = false
@@ -30,6 +36,45 @@ fullscreen = false
 iteration = 0
 infinite_trace_mode = false
 enable_shaders = true
+ca_noise = 0
+ca_tick = 1
+ca_goingup = true
+ca_max_tick = 0
+ca_noise_size = 8  -- pixels
+
+
+function gen_shader_noise()
+    if shaders_supported and shader_success then
+        ca_tick = 1
+        local screen_width = love.graphics.getWidth()
+        local screen_height = love.graphics.getHeight()
+        ca_max_tick = screen_width - 1
+        effect:sendInt('ca_max_tick', ca_max_tick)
+        local ca_noisedata = love.image.newImageData(screen_width, screen_height)
+        local noise_value = 0
+        for w = 1, love.graphics.getWidth() - 1 do
+            for h = 0, love.graphics.getHeight() - 1 do
+                noise_value_r = (Noise.Simplex2D(w / 3, h / ca_noise_size) + 1)
+                noise_value_r = noise_value_r * ((Noise.Simplex2D(w / 30, h / 30) + 1) / 2) * 1.1
+                noise_value_r = noise_value_r * ((Noise.Simplex2D(w / 80, h / 80) + 1) / 1.5) * 1.3
+
+                noise_value_g = (Noise.Simplex2D((w + screen_width) / 3, h / ca_noise_size) + 1)
+                noise_value_g = noise_value_g * ((Noise.Simplex2D((w + screen_width) / 30, h / 30) + 1) / 2) * 1.1
+                noise_value_g = noise_value_g * ((Noise.Simplex2D((w + screen_width) / 80, h / 80) + 1) / 1.5) * 1.3
+
+                noise_value_b = (Noise.Simplex2D((w + screen_width * 2) / 3, h / ca_noise_size) + 1)
+                noise_value_b = noise_value_b * ((Noise.Simplex2D((w + (screen_width * 2)) / 30, h / 30) + 1) / 2) * 1.1
+                noise_value_b = noise_value_b * ((Noise.Simplex2D((w + (screen_width * 2)) / 80, h / 80) + 1) / 1.5) * 1.3
+
+                -- print(noise_value_r, noise_value_g, noise_value_b)
+
+                ca_noisedata:setPixel(w, h, noise_value_r, noise_value_g, noise_value_b, 0)
+            end
+        end
+        ca_noise = love.graphics.newImage(ca_noisedata)
+        effect:send('ca_noise', ca_noise)
+    end
+end
 
 
 function init_bodies()
@@ -166,6 +211,7 @@ game = {}
 function love.load()
     -- setup everything for the game
     math.randomseed(os.time())  -- seed random number generator
+    gen_shader_noise()
     Gamestate.registerEvents()
     -- Gamestate.switch(menu)
     Gamestate.switch(game)
@@ -223,6 +269,21 @@ end
 
 
 function game:draw()
+    -- chromatic aberration
+    if ca_goingup then
+        ca_tick = ca_tick + 1
+        if ca_tick >= ca_max_tick then
+            ca_goingup = false
+        end
+    else
+        ca_tick = ca_tick - 1
+        if ca_tick <= 1 then
+            ca_goingup = true
+        end
+    end
+
+    effect:sendInt('ca_tick', ca_tick)
+
     -- shader begin
     current_canvas = love.graphics.newCanvas()
     love.graphics.setCanvas(current_canvas)
@@ -320,4 +381,5 @@ end
 function game:resize(w, h)
     init_bodies()
     start_time = os.time()
+    gen_shader_noise()
 end
