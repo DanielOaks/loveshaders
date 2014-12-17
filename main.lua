@@ -18,7 +18,7 @@ Gamestate = require 'libs.gamestate'  -- hump
 Menu = require 'libs.menuscroll'  -- https://love2d.org/forums/viewtopic.php?f=5&t=3636
 Noise = require 'libs.noise'  -- http://staffwww.itn.liu.se/~stegu/simplexnoise/Noise.lua
 
-shaders_supported = love.graphics.isSupported and love.graphics.isSupported("canvas") and love.graphics.isSupported("shader")
+shaders_supported = love.graphics.isSupported and love.graphics.isSupported('canvas') and love.graphics.isSupported('shader')
 if shaders_supported then
     local shader_data = love.filesystem.read('shaders/dantsc.frag')
     shader_success, inside_screen_effect = pcall(love.graphics.newShader, shader_data)
@@ -139,13 +139,13 @@ local top = math.pi * 1.5
 
 function rwrc(x, y, w, h, r)
     r = r or 15
-    love.graphics.rectangle("fill", x, y+r, w, h-r*2)
-    love.graphics.rectangle("fill", x+r, y, w-r*2, r)
-    love.graphics.rectangle("fill", x+r, y+h-r, w-r*2, r)
-    love.graphics.arc("fill", x+r, y+r, r, left, top)
-    love.graphics.arc("fill", x + w-r, y+r, r, -bottom, right)
-    love.graphics.arc("fill", x + w-r, y + h-r, r, right, bottom)
-    love.graphics.arc("fill", x+r, y + h-r, r, bottom, left)
+    love.graphics.rectangle('fill', x, y+r, w, h-r*2)
+    love.graphics.rectangle('fill', x+r, y, w-r*2, r)
+    love.graphics.rectangle('fill', x+r, y+h-r, w-r*2, r)
+    love.graphics.arc('fill', x+r, y+r, r, left, top)
+    love.graphics.arc('fill', x + w-r, y+r, r, -bottom, right)
+    love.graphics.arc('fill', x + w-r, y + h-r, r, right, bottom)
+    love.graphics.arc('fill', x+r, y + h-r, r, bottom, left)
 end
 
 
