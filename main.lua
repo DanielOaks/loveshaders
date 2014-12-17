@@ -1,6 +1,5 @@
--- space body simulation
--- gravity and all that fun stuff
--- for löve2d 0.9.0
+-- shader test bed
+-- for löve2d 0.9.1
 -- by Daniel Oaks <danneh@danneh.net>
 -- under the BSD 2-clause license
 

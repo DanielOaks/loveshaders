@@ -1,22 +1,12 @@
-Little Space Sim
-----------------
+Shaders for Löve2d
+------------------
 
-Just a simple space sim. Also acts as something I can write and test shaders against!
+Just a testbed for shaders I write to work with Löve2d.
 
-Install with ``git clone https://github.com/DanielOaks/planetsim.git``
+Install with ``git clone https://github.com/DanielOaks/loveshaders.git``
 
-Then you run the http://love2d.org/ program with the planetsim directory as the arg. You can just drop the whole directory into the Löve2d program.
+Then you run the http://love2d.org/ program with the loveshaders directory as the arg. You can just drop the whole directory into the Löve2d program.
 
-.. code::
+Example, without and with shaders enabled:
 
-    I tried Love2d
-    I am bad at gravity
-    Simulation fail
-
-No shaders:
-
-.. image:: http://i.imgur.com/e3UMk11.png
-
-And with some recently-added chromatic aberration!
-
-.. image:: http://i.imgur.com/o2ioTGQ.png
+.. image:: http://i.imgur.com/5gETMUZ.png
