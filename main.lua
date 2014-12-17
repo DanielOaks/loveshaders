@@ -252,4 +252,5 @@ end
 
 function game:resize(w, h)
     gen_shader_noise(inside_screen_effect)
+    gen_example_image()
 end
