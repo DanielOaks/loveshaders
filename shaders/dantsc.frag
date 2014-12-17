@@ -5,6 +5,11 @@
 #define PI 3.14159265
 
 
+// How large our 'pixels' are.
+// You will want to draw most everything in a this-by-this grid if possible.
+extern float pixel_size = 4.0;
+
+
 /// Barrel Distortion
 extern bool barrel_enabled = true;
 
@@ -76,14 +81,72 @@ vec4 chromatic_aberration(Image texture, vec2 tex_coords)
 }
 
 
+/// Colour bleeding
+extern bool color_bleed_enabled = true;
+
+vec4 color_bleed(vec4 rgb, Image texture, vec2 pixel_coords)
+{
+	float r = rgb.r;
+	float g = rgb.g;
+	float b = rgb.b;
+	int count = 1;
+
+	// blur within pixels
+	float start_of_pixel_x = int((pixel_coords.x * love_ScreenSize.x) / pixel_size) * float(pixel_size) / float(love_ScreenSize.x);
+	float end_of_pixel_x = (int((pixel_coords.x * love_ScreenSize.x) / pixel_size) + 0.9) * float(pixel_size) / float(love_ScreenSize.x);
+
+	float start_of_pixel_y = int((pixel_coords.y * love_ScreenSize.y) / pixel_size) * float(pixel_size) / float(love_ScreenSize.y);
+	float end_of_pixel_y = (int((pixel_coords.y * love_ScreenSize.y) / pixel_size) + 0.9) * float(pixel_size) / float(love_ScreenSize.y);
+
+	vec4 working_pix;
+	vec2 working_coords;
+
+	// we only do a small sampling here.
+	// if we want, calc. the middle of pixels by averaging above, then we
+	//   can have lots more points to sample and be accurate!
+	working_coords.x = end_of_pixel_x;
+	working_coords.y = end_of_pixel_y;
+	working_pix = Texel(texture, barrel_distortion(working_coords));
+	r += working_pix.r; g += working_pix.g; b += working_pix.b;
+	count++;
+
+	working_coords.x = start_of_pixel_x;
+	working_coords.y = end_of_pixel_y;
+	working_pix = Texel(texture, barrel_distortion(working_coords));
+	r += working_pix.r; g += working_pix.g; b += working_pix.b;
+	count++;
+
+	working_coords.x = end_of_pixel_x;
+	working_coords.y = start_of_pixel_y;
+	working_pix = Texel(texture, barrel_distortion(working_coords));
+	r += working_pix.r; g += working_pix.g; b += working_pix.b;
+	count++;
+
+	working_coords.x = end_of_pixel_x;
+	working_coords.y = end_of_pixel_y;
+	working_pix = Texel(texture, barrel_distortion(working_coords));
+	r += working_pix.r; g += working_pix.g; b += working_pix.b;
+	count++;
+
+	// average
+	r /= count; g /= count; b /= count;
+
+	// assemble output rgb
+	vec4 rgb_out;
+
+	rgb_out.r = r;
+	rgb_out.b = b;
+	rgb_out.g = g;
+
+	return rgb_out;
+}
+
+
 /// Scanlines
 extern bool scanline_enabled = true;
 
-// How large our 'pixels' are.
-// You will want to draw most everything in a this-by-this grid if possible.
-extern float scanline_pixel_size = 5.0;
 // Opacity of the scanlines, 0 to 1.
-extern float scanline_opacity = 0.13;
+extern float scanline_opacity = 0.22;
 // How wide the darkened scanlines are in comparison to content.
 // 0.5 is same height, 0.8 is mostly scanline, 0.2 is mostly content.
 extern float scanline_width = 0.65;
@@ -92,11 +155,10 @@ extern float scanline_width = 0.65;
 vec4 scanline_color(vec4 rgb, vec2 pixel_coords)
 {
 	vec4 rgb_out;
-
 	rgb_out = rgb;
 
 	// lowers the alpha of the pixel based on whether it falls in a scanline or not
-	rgb_out.a = (1.0 - (cos((love_ScreenSize.y / scanline_pixel_size) * pixel_coords.y * 2 * PI) + scanline_width) * scanline_opacity);
+	rgb_out.a = (1.0 - (cos((love_ScreenSize.y / pixel_size) * pixel_coords.y * 2 * PI) + scanline_width) * scanline_opacity);
 
 	return rgb_out;
 }
@@ -119,7 +181,9 @@ vec4 effect(vec4 vcolor, Image texture, vec2 texture_coords, vec2 pixel_coords)
 	}
 
 	// color bleed, etc
-	// working_rgb = color_bleed(working_rgb, working_tex_coords);
+	if (color_bleed_enabled) {
+		working_rgb = color_bleed(working_rgb, texture, working_coords);
+	}
 
 	// scanlines
 	if (scanline_enabled) {
