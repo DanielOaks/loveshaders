@@ -17,8 +17,17 @@ extern vec2 mouse;
 //   x and y must be in the range (-1, 1)
 vec2 barrel_distortion(vec2 point)
 {
+	// this makes our coords go from -1 to 1, instead of 0 to 1
+	point.x = ((point.x * 2.0) - 1.0);
+	point.y = ((point.y * -2.0) + 1.0);
+
+	// distort
 	point.x = point.x + (point.y * point.y) * point.x * BARREL_X_DISTORTION;
 	point.y = point.y + (point.x * point.x) * point.y * BARREL_Y_DISTORTION;
+
+	// this makes our working coords back to 0 to 1, from -1 to 1
+	point.x = ((point.x + 1.0) / 2.0);
+	point.y = ((point.y - 1.0) / -2.0);
 
 	return point;
 }
@@ -48,9 +57,9 @@ vec4 chromatic_aberration(Image texture, vec2 tex_coords)
 
 	// get distorted rgb
 	vec4 rgb;
-	rgb.r = Texel(texture, tex_coords + noise_val.r).r;
-	rgb.g = Texel(texture, tex_coords + noise_val.g).g;
-	rgb.b = Texel(texture, tex_coords + noise_val.b).b;
+	rgb.r = Texel(texture, barrel_distortion(tex_coords + noise_val.r)).r;
+	rgb.g = Texel(texture, barrel_distortion(tex_coords + noise_val.g)).g;
+	rgb.b = Texel(texture, barrel_distortion(tex_coords + noise_val.b)).b;
 
 	// original alpha
 	rgb.a = Texel(texture, tex_coords).a;
@@ -86,30 +95,20 @@ vec4 scanline_color(vec4 rgb, vec2 pixel_coords)
 /// Pixel Effect
 vec4 effect(vec4 vcolor, Image texture, vec2 texture_coords, vec2 pixel_coords)
 {
-	// this makes our working coords go from -1 to 1, instead of 0 to 1
-	vec2 working_coords;
-	working_coords.x = ((texture_coords.x * 2.0) - 1.0);
-	working_coords.y = ((texture_coords.y * -2.0) + 1.0);
-
 	// position distortion
-	working_coords = barrel_distortion(working_coords);
-
-	// this makes our working coords back to 0 to 1, from -1 to 1
-	vec2 working_tex_coords;
-	working_tex_coords.x = ((working_coords.x + 1.0) / 2.0);
-	working_tex_coords.y = ((working_coords.y - 1.0) / -2.0);
+	vec2 working_coords = barrel_distortion(texture_coords);
 
 	// // get normal rgb
-	// vec4 working_rgb = Texel(texture, working_tex_coords);
+	// vec4 working_rgb = Texel(texture, working_coords);
 
 	// chromatic aberration
-	vec4 working_rgb = chromatic_aberration(texture, working_tex_coords);
+	vec4 working_rgb = chromatic_aberration(texture, working_coords);
 
 	// color bleed, etc
 	// working_rgb = color_bleed(working_rgb, working_tex_coords);
 
 	// scanlines
-	working_rgb = scanline_color(working_rgb, working_tex_coords);
+	working_rgb = scanline_color(working_rgb, working_coords);
 
 	// returning
 	return working_rgb;

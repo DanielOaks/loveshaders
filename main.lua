@@ -16,7 +16,6 @@ end
 
 -- libs
 Gamestate = require 'libs.gamestate'  -- hump
-Vector = require 'libs.vector'  -- hump
 Menu = require 'libs.menuscroll'  -- https://love2d.org/forums/viewtopic.php?f=5&t=3636
 Noise = require 'libs.noise'  -- http://staffwww.itn.liu.se/~stegu/simplexnoise/Noise.lua
 
@@ -33,8 +32,6 @@ end
 
 fullscreen = false
 
-iteration = 0
-infinite_trace_mode = false
 enable_shaders = true
 ca_noise = 0
 ca_tick = 1
@@ -77,112 +74,6 @@ function gen_shader_noise()
 end
 
 
-function init_bodies()
-    iteration = iteration + 1
-
-    -- initialize our bodies
-    bodies = {}
-    max_bodies = 160   -- how many bodies we want
-
-    -- make warmup time faster, try to minimise function calls
-    local screen_width = love.graphics.getWidth()
-    local screen_height = love.graphics.getHeight()
-
-    -- create our bodies
-    for i = 1, max_bodies do
-        bodies[i] = {  -- moons
-            pos = Vector(math.random(20, screen_width - 20), 
-                         math.random(20, screen_height - 20)),
-            vel = Vector(math.random(-2, 2),
-                         math.random(-2, 2)),
-            weight = math.floor(math.random(2, 10)),
-            body_color = {math.floor(math.random(10, 255)),
-                     math.floor(math.random(10, 255)),
-                     math.floor(math.random(10, 255)), 255},
-            trace = {},
-        }
-        bodies[i].trace_color = table.copy(bodies[i].body_color)
-        bodies[i].trace_color[4] = 70
-        x, y = bodies[i].pos:unpack()
-        bodies[i].trace[#bodies[i].trace+1] = x
-        bodies[i].trace[#bodies[i].trace+1] = y
-        bodies[i].trace[#bodies[i].trace+1] = x
-        bodies[i].trace[#bodies[i].trace+1] = y
-    end
-    bodies[1] = {  -- planet
-        pos = Vector(screen_width / 2, screen_height / 2),
-        vel = Vector(math.random(-3, 3),
-                     math.random(-3, 3)),
-        weight = math.floor(math.random(30, 40)),
-        body_color = {math.floor(math.random(10, 255)),
-                      math.floor(math.random(10, 255)),
-                      math.floor(math.random(10, 255)), 255},
-        trace = {},
-    }
-    bodies[1].trace_color = table.copy(bodies[1].body_color)
-    bodies[1].trace_color[4] = 100
-    x, y = bodies[1].pos:unpack()
-    bodies[1].trace[#bodies[1].trace+1] = x
-    bodies[1].trace[#bodies[1].trace+1] = y
-    bodies[1].trace[#bodies[1].trace+1] = x
-    bodies[1].trace[#bodies[1].trace+1] = y
-end
-
-
-function draw_trails()
-    -- drawings!
-    for i = 1, max_bodies do
-        -- drawing current line trace
-        love.graphics.setColor(bodies[i].trace_color)
-        love.graphics.line(bodies[i].trace)
-    end
-end
-
-
-function draw_bodies()
-    for i = 1, max_bodies do
-        -- drawing current position
-        love.graphics.setColor(bodies[i].body_color)
-        love.graphics.setPointSize(bodies[i].weight)
-        love.graphics.point(pix(bodies[i].pos.x, bodies[i].pos.y))   -- draw each point
-    end
-end
-
-
-function grav_bodies()
-    local delta_ms = love.timer.getDelta() * 100
-    local gravity = 0.0000016
-
-    -- drawings!
-    for i = 1, max_bodies do
-        
-        -- gravity
-        -- NOTE: I suck at gravity
-        for j = 1, max_bodies do
-            bodies[i].vel = bodies[i].vel + ((bodies[j].pos - bodies[i].pos) * ((gravity * bodies[i].weight * bodies[j].weight) / math.sqrt(clip(bodies[i].pos:dist(bodies[j].pos), 0.1, 100000))) * delta_ms) / 2
-        end
-
-        bodies[i].pos = bodies[i].pos + bodies[i].vel * delta_ms
-
-        -- gravity
-        -- NOTE: I suck at gravity
-        for j = 1, max_bodies do
-            bodies[i].vel = bodies[i].vel + ((bodies[j].pos - bodies[i].pos) * ((gravity * bodies[i].weight * bodies[j].weight) / math.sqrt(clip(bodies[i].pos:dist(bodies[j].pos), 0.1, 100000))) * delta_ms) / 2
-        end
-
-        x, y = bodies[i].pos:unpack()
-        bodies[i].trace[#bodies[i].trace+1] = x
-        bodies[i].trace[#bodies[i].trace+1] = y
-        if not infinite_trace_mode then
-            while #bodies[i].trace > 20 do
-                table.remove(bodies[i].trace, 1)
-                table.remove(bodies[i].trace, 1)
-            end
-        end
-    end
-end
-
-
 -- helper functions
 function pix(x, y)
     -- return an x, y that will draw on a perfect pixel boundary
@@ -203,54 +94,22 @@ end
 
 
 -- Gamestates
-menu = {}
 game = {}
 
 
 -- löve functions
 function love.load()
-    -- setup everything for the game
+    -- setup everything we need
     math.randomseed(os.time())  -- seed random number generator
     gen_shader_noise()
     Gamestate.registerEvents()
-    -- Gamestate.switch(menu)
     Gamestate.switch(game)
-end
-
-
--- gs menu
-function menu:enter()
-    testmenu = Menu.new()
-    testmenu:addItem{
-        name = 'Start Game',
-        action = function()
-            Gamestate.switch(game)
-        end
-    }
-    init_bodies()
-end
-
-
-function menu:update(dt)
-    testmenu:update(dt)
-end
-
-
-function menu:draw()
-    draw_bodies()
-    grav_bodies()
-
-    testmenu:draw(10, 10)
-end
-
-function menu:keypressed(key)
-    testmenu:keypressed(key)
 end
 
 
 -- gs game
 function game:enter()
-    init_bodies()
+    gen_example_image()
 
     -- graphics setup
     love.graphics.setPointStyle('smooth')
@@ -265,6 +124,40 @@ function drawrect(x_margin, y_margin, x_border_width, y_border_width)
 
     love.graphics.rectangle('fill', x_margin, y_margin, x_border_width, love.graphics.getHeight() - (2 * y_margin))
     love.graphics.rectangle('fill', love.graphics.getWidth() - x_margin - x_border_width, y_margin, x_border_width, love.graphics.getHeight() - (2 * y_margin))
+end
+
+
+-- rounded rectangles
+-- from https://love2d.org/forums/viewtopic.php?t=11511
+local right = 0
+local left = math.pi
+local bottom = math.pi * 0.5
+local top = math.pi * 1.5
+
+function rwrc(x, y, w, h, r)
+    r = r or 15
+    love.graphics.rectangle("fill", x, y+r, w, h-r*2)
+    love.graphics.rectangle("fill", x+r, y, w-r*2, r)
+    love.graphics.rectangle("fill", x+r, y+h-r, w-r*2, r)
+    love.graphics.arc("fill", x+r, y+r, r, left, top)
+    love.graphics.arc("fill", x + w-r, y+r, r, -bottom, right)
+    love.graphics.arc("fill", x + w-r, y + h-r, r, right, bottom)
+    love.graphics.arc("fill", x+r, y + h-r, r, bottom, left)
+end
+
+
+function gen_example_image()
+    miku = love.graphics.newImage('images/miku.png')
+
+    -- scale miku image
+    miku_x_scale = love.graphics.getWidth() / miku:getWidth()
+    miku_y_scale = love.graphics.getHeight() / miku:getHeight()
+
+    if miku_x_scale < 1.0 or miku_y_scale < 1.0 then
+        miku_scale = math.min(miku_x_scale, miku_y_scale)
+    else
+        miku_scale = 1
+    end
 end
 
 
@@ -288,71 +181,11 @@ function game:draw()
     current_canvas = love.graphics.newCanvas()
     love.graphics.setCanvas(current_canvas)
 
-
-    -- Background
-    love.graphics.setColor(30, 30, 30)
+    -- drawing stuff
+    love.graphics.setColor(255, 255, 255)
     love.graphics.rectangle('fill', 0, 0, love.graphics.getWidth(), love.graphics.getHeight())
 
-    -- Borders, really ugly
-    love.graphics.setColor(32, 31, 31)
-    drawrect(30, 30, 40, 40)
-
-    love.graphics.setColor(32, 32, 32)
-    drawrect(30, 30, 30, 30)
-
-    love.graphics.setColor(33, 33, 33)
-    drawrect(30, 30, 20, 20)
-
-    love.graphics.setColor(28, 28, 28)
-    drawrect(30, 30, 2.5, 2.5)
-
-    love.graphics.setColor(29, 29, 28)
-    drawrect(32.5, 32.5, 2.5, 2.5)
-
-    -- Bodies
-    draw_trails()
-    draw_trails()
-    draw_trails()
-
-    draw_bodies()
-
-    grav_bodies()
-
-    -- More borders, ugly hack
-    love.graphics.setColor(20, 20, 20)
-    drawrect(0, 0, 20, 20)
-
-    love.graphics.setColor(50, 50, 50)
-    drawrect(20, 20, 5, 5)
-
-    love.graphics.setColor(60, 60, 60)
-    drawrect(25, 25, 2.5, 2.5)
-
-    love.graphics.setColor(70, 70, 70)
-    drawrect(27.25, 27.25, 2.5, 2.5)
-
-
-    time_offset = os.difftime(os.time(), start_time)
-
-    -- refresh!
-    if time_offset > 15.9 then
-        init_bodies()
-        start_time = os.time()
-    end
-
-    -- print iteration and seconds remaining
-    love.graphics.setColor(200, 200, 200)
-    love.graphics.print([[[i]   Infinite Trace Mode
-[r]   Refresh
-[d]   Enable / Disable Shaders
-[esc] Menu]], 40, 40)
-    love.graphics.print(iteration, 40, 80 + (15 * 1))
-    love.graphics.print(16 - math.floor(time_offset), 40, 80 + (15 * 2))
-
-    -- shader error message
-    if shaders_supported and not shader_success then
-        love.graphics.print(effect, 40, 80 + (15 * 3));
-    end
+    love.graphics.draw(miku, (love.graphics.getWidth() - (miku:getWidth() * miku_scale)) / 2, (love.graphics.getHeight() - (miku:getHeight() * miku_scale)) / 2, 0, miku_scale, miku_scale)
 
     -- shader cleanup
     love.graphics.setCanvas()
@@ -361,17 +194,26 @@ function game:draw()
     end
     love.graphics.draw(current_canvas)
     love.graphics.setShader()
+
+    -- print information
+    love.graphics.setColor(245, 245, 245, 190)
+    rwrc(10, 10, 210, 50, 10)
+    love.graphics.setColor(20, 20, 20)
+    love.graphics.print([[[d] Enable / Disable Shaders
+[esc] Exit]], 20, 20)
+
+    -- shader error message
+    if shaders_supported and not shader_success then
+        love.graphics.print(effect, 20, 20 + (15 * 3));
+    end
+
+    love.graphics.setShader()
 end
 
 
 function game:keyreleased(key)
     if key == 'escape' then
-        Gamestate.switch(menu)
-    elseif key == 'i' then
-        infinite_trace_mode = not infinite_trace_mode
-    elseif key == 'r' then
-        init_bodies()
-        start_time = os.time()
+        love.event.quit()
     elseif key == 'd' then
         enable_shaders = not enable_shaders
     end
@@ -379,7 +221,5 @@ end
 
 
 function game:resize(w, h)
-    init_bodies()
-    start_time = os.time()
     gen_shader_noise()
 end
