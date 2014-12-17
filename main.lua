@@ -28,6 +28,7 @@ if shaders_supported then
     if shader_success then
         inside_screen_effect:send('ca_enabled', true)
         outside_screen_effect:send('scanline_enabled', false)
+        outside_screen_effect:send('color_bleed_enabled', false)
     else
         print(inside_screen_effect)
     end
