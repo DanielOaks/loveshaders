@@ -75,10 +75,13 @@ function DaNTSC:tick()
 end
 
 
--- set 'pixel size', in pixels
+-- get/set 'pixel size', in pixels
 function DaNTSC:setPixelSize(size)
     self.pixel_size = size
     self.shader:send('pixel_size', size)
+end
+function DaNTSC:getPixelSize(size)
+    return self.pixel_size
 end
 
 
