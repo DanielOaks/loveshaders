@@ -7,9 +7,10 @@ DaNTSC = require 'shaders.dantsc'  -- mine!
 
 -- shader variables
 enable_scanlines = true
-enable_pixel_bleed = false
+enable_pixel_bleed = true
 enable_barrel_distort = true
 enable_chromatic_aberration = false
+pixel_size = 3
 
 -- inside and outside shaders
 outside_screen_effect = DaNTSC.new()
@@ -25,6 +26,7 @@ inside_screen_effect:setPixelBleed(enable_pixel_bleed)
 inside_screen_effect:setChromaticAberration(enable_chromatic_aberration)
 inside_screen_effect:setBarrelDistort(enable_barrel_distort)
 inside_screen_effect:pushSettings()
+inside_screen_effect:setPixelSize(pixel_size)
 
 -- error
 if not inside_screen_effect.shader_success then
@@ -189,6 +191,21 @@ function game:keyreleased(key)
         enable_chromatic_aberration = not enable_chromatic_aberration
         inside_screen_effect:setChromaticAberration(enable_chromatic_aberration)
         inside_screen_effect:pushSettings()
+    elseif key == 'up' then
+        if enable_pixel_bleed then
+            pixel_size = pixel_size + 1
+            inside_screen_effect:setPixelSize(pixel_size)
+        end
+    elseif key == 'down' then
+        if enable_pixel_bleed then
+            pixel_size = pixel_size - 1
+            if pixel_size < 1 then
+                pixel_size = 1
+            end
+            inside_screen_effect:setPixelSize(pixel_size)
+        end
+    else
+        print('key pressed: ' .. key)
     end
 end
 

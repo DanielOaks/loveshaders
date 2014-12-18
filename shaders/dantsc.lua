@@ -44,6 +44,10 @@ function DaNTSC.new()
         self.error_message = 'Shaders not supported on this machine'
     end
 
+    -- more defaults
+    self.pixel_size = 4
+    self:setPixelSize(self.pixel_size)
+
     return self
 end
 
@@ -68,6 +72,13 @@ function DaNTSC:tick()
 
         self.shader:sendInt('ca_tick', self.ca.tick)
     end
+end
+
+
+-- set 'pixel size', in pixels
+function DaNTSC:setPixelSize(size)
+    self.pixel_size = size
+    self.shader:send('pixel_size', size)
 end
 
 
