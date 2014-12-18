@@ -1,7 +1,7 @@
 -- shader test bed
 -- for löve2d 0.9.1
 -- by Daniel Oaks <danneh@danneh.net>
--- under the BSD 2-clause license
+-- released into the Public Domain - feel free to hack and redistribute this as much as you want
 
 
 -- config

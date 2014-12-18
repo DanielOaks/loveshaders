@@ -1,5 +1,6 @@
+// DaNTSC Shader
 // written by Daniel Oaks <daniel@danieloaks.net>
-// licensed under the BSD 2-clause license
+// released into the Public Domain - feel free to hack and redistribute this as much as you want
 // attempt at an ntsc-like filter with a nicer license
 
 #define PI 3.14159265
@@ -81,10 +82,10 @@ vec4 chromatic_aberration(Image texture, vec2 tex_coords)
 }
 
 
-/// Colour bleeding
-extern bool color_bleed_enabled = true;
+/// In-Pixel color bleeding
+extern bool pixel_bleed_enabled = true;
 
-vec4 color_bleed(vec4 rgb, Image texture, vec2 pixel_coords)
+vec4 pixel_bleed(vec4 rgb, Image texture, vec2 pixel_coords)
 {
 	float r = rgb.r;
 	float g = rgb.g;
@@ -92,10 +93,10 @@ vec4 color_bleed(vec4 rgb, Image texture, vec2 pixel_coords)
 	int count = 1;
 
 	// blur within pixels
-	float start_of_pixel_x = int((pixel_coords.x * love_ScreenSize.x) / pixel_size) * float(pixel_size) / float(love_ScreenSize.x);
+	float start_of_pixel_x = (int((pixel_coords.x * love_ScreenSize.x) / pixel_size) + 0.1) * float(pixel_size) / float(love_ScreenSize.x);
 	float end_of_pixel_x = (int((pixel_coords.x * love_ScreenSize.x) / pixel_size) + 0.9) * float(pixel_size) / float(love_ScreenSize.x);
 
-	float start_of_pixel_y = int((pixel_coords.y * love_ScreenSize.y) / pixel_size) * float(pixel_size) / float(love_ScreenSize.y);
+	float start_of_pixel_y = (int((pixel_coords.y * love_ScreenSize.y) / pixel_size) + 0.1) * float(pixel_size) / float(love_ScreenSize.y);
 	float end_of_pixel_y = (int((pixel_coords.y * love_ScreenSize.y) / pixel_size) + 0.9) * float(pixel_size) / float(love_ScreenSize.y);
 
 	vec4 working_pix;
@@ -181,8 +182,8 @@ vec4 effect(vec4 vcolor, Image texture, vec2 texture_coords, vec2 pixel_coords)
 	}
 
 	// color bleed, etc
-	if (color_bleed_enabled) {
-		working_rgb = color_bleed(working_rgb, texture, working_coords);
+	if (pixel_bleed_enabled) {
+		working_rgb = pixel_bleed(working_rgb, texture, working_coords);
 	}
 
 	// scanlines
