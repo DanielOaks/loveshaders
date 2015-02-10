@@ -7,7 +7,7 @@ DaNTSC = require 'shaders.dantsc'  -- mine!
 
 -- shader variables
 enable_scanlines = true
-enable_pixel_bleed = true
+enable_pixel_bleed = false
 enable_barrel_distort = true
 enable_chromatic_aberration = false
 pixel_size = 3
