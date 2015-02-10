@@ -22,8 +22,8 @@ extern bool barrel_enabled = true;
 
 // How much we distort on the x and y axis.
 // From 0 to 1.
-extern float barrel_distort_x = 0.01;
-extern float barrel_distort_y = 0.015;
+extern float barrel_distort_x = 0.06;
+extern float barrel_distort_y = 0.065;
 
 // Takes a point (x, y) and returns the barrel-distorted position of that point
 //   x and y must be in the range (-1, 1)
@@ -77,9 +77,9 @@ vec4 chromatic_aberration(Image texture, vec2 tex_coords)
 
 	// get distorted rgb
 	vec4 rgb;
-	rgb.r = Texel(texture, barrel_distortion(tex_coords + noise_val.r)).r;
-	rgb.g = Texel(texture, barrel_distortion(tex_coords + noise_val.g)).g;
-	rgb.b = Texel(texture, barrel_distortion(tex_coords + noise_val.b)).b;
+	rgb.r = Texel(texture, tex_coords + noise_val.r).r;
+	rgb.g = Texel(texture, tex_coords + noise_val.g).g;
+	rgb.b = Texel(texture, tex_coords + noise_val.b).b;
 
 	// original alpha
 	rgb.a = Texel(texture, tex_coords).a;
@@ -105,65 +105,78 @@ vec4 pixel_bleed(vec4 rgb, Image texture, vec2 pixel_coords)
 	float end_of_pixel_y;
 
 	if (square_pixels) {
-		start_of_pixel_x = (int((pixel_coords.x * love_ScreenSize.x) / pixel_size) + 0.1) * float(pixel_size) / float(love_ScreenSize.x);
-		end_of_pixel_x = (int((pixel_coords.x * love_ScreenSize.x) / pixel_size) + 0.9) * float(pixel_size) / float(love_ScreenSize.x);
+		start_of_pixel_x = (float(int((pixel_coords.x * love_ScreenSize.x) / pixel_size)) + 0.1) * float(pixel_size) / float(love_ScreenSize.x);
+		end_of_pixel_x = (float(int((pixel_coords.x * love_ScreenSize.x) / pixel_size)) + 0.9) * float(pixel_size) / float(love_ScreenSize.x);
 
-		start_of_pixel_y = (int((pixel_coords.y * love_ScreenSize.y) / pixel_size) + 0.1) * float(pixel_size) / float(love_ScreenSize.y);
-		end_of_pixel_y = (int((pixel_coords.y * love_ScreenSize.y) / pixel_size) + 0.9) * float(pixel_size) / float(love_ScreenSize.y);
+		start_of_pixel_y = (float(int((pixel_coords.y * love_ScreenSize.y) / pixel_size)) + 0.1) * float(pixel_size) / float(love_ScreenSize.y);
+		end_of_pixel_y = (float(int((pixel_coords.y * love_ScreenSize.y) / pixel_size)) + 0.9) * float(pixel_size) / float(love_ScreenSize.y);
 
 	} else {
 		// from thing below
 		float current_pixel_h = (pixel_coords.x * love_ScreenSize.x) / pixel_size;
 		bool on_even_scanline = mod(int(current_pixel_h), 2.0) == 0;
 
-		float current_pixel_v = (pixel_coords.y * love_ScreenSize.y) / (pixel_size * vertical_pixel_scale);
+		float current_pixel_v = 0;
 		if (on_even_scanline) {
-			// current_pixel_v += 0.5;
+			current_pixel_v = 0.5;
 		}
 
-		//
-		start_of_pixel_x = (int((pixel_coords.x * love_ScreenSize.x) / pixel_size) + 0.1) * float(pixel_size) / float(love_ScreenSize.x);
-		end_of_pixel_x = (int((pixel_coords.x * love_ScreenSize.x) / pixel_size) + 0.9) * float(pixel_size) / float(love_ScreenSize.x);
+		// pixels
+		start_of_pixel_x = (float(int((pixel_coords.x * love_ScreenSize.x) / pixel_size)) + 0.1) * float(pixel_size) / float(love_ScreenSize.x);
+		end_of_pixel_x = (float(int((pixel_coords.x * love_ScreenSize.x) / pixel_size)) + 0.9) * float(pixel_size) / float(love_ScreenSize.x);
 
-		start_of_pixel_y = (current_pixel_v + 0.1) * float(pixel_size * vertical_pixel_scale) / float(love_ScreenSize.y);
-		end_of_pixel_y = (current_pixel_v + 0.9) * float(pixel_size * vertical_pixel_scale) / float(love_ScreenSize.y);
+		start_of_pixel_y = (float(int((pixel_coords.y * love_ScreenSize.y + (current_pixel_v * pixel_size * vertical_pixel_scale)) / (pixel_size * vertical_pixel_scale))) + 0.1) * float(pixel_size) * vertical_pixel_scale / float(love_ScreenSize.y);
+		end_of_pixel_y = (float(int((pixel_coords.y * love_ScreenSize.y + (current_pixel_v * pixel_size * vertical_pixel_scale)) / (pixel_size * vertical_pixel_scale))) + 0.9) * float(pixel_size) * vertical_pixel_scale / float(love_ScreenSize.y);
 	}
+	float mid_of_pixel_x = (start_of_pixel_x + end_of_pixel_x) / 2.0;
+	float mid_of_pixel_y = (start_of_pixel_y + end_of_pixel_y) / 2.0;
 
 	vec4 working_pix;
 	vec2 working_coords;
 
-	// we only do a small sampling here.
-	// if we want, calc. the middle of pixels by averaging above, then we
-	//   can have lots more points to sample and be accurate!
-	// NOTE: we add the colours below twice, because if we do it only once,
-	//   there's too much of the original pixel remaining (ghosting the image)
-	working_coords.x = end_of_pixel_x;
-	working_coords.y = end_of_pixel_y;
-	working_pix = Texel(texture, barrel_distortion(working_coords));
+	// go through and add it all together!
+	// NOTE: can working_pix values overflow?
+	working_coords.x = start_of_pixel_x;
+	working_coords.y = start_of_pixel_y;
+	working_pix = Texel(texture, working_coords);
 	r += working_pix.r; g += working_pix.g; b += working_pix.b;
+	count++;
+
+	working_coords.x = start_of_pixel_x;
+	working_coords.y = mid_of_pixel_y;
+	working_pix = Texel(texture, working_coords);
 	r += working_pix.r; g += working_pix.g; b += working_pix.b;
-	count += 2;
+	count++;
 
 	working_coords.x = start_of_pixel_x;
 	working_coords.y = end_of_pixel_y;
-	working_pix = Texel(texture, barrel_distortion(working_coords));
+	working_pix = Texel(texture, working_coords);
 	r += working_pix.r; g += working_pix.g; b += working_pix.b;
+	count++;
+
+	working_coords.x = mid_of_pixel_x;
+	working_coords.y = start_of_pixel_y;
+	working_pix = Texel(texture, working_coords);
 	r += working_pix.r; g += working_pix.g; b += working_pix.b;
-	count += 2;
+	count++;
 
 	working_coords.x = end_of_pixel_x;
 	working_coords.y = start_of_pixel_y;
-	working_pix = Texel(texture, barrel_distortion(working_coords));
+	working_pix = Texel(texture, working_coords);
 	r += working_pix.r; g += working_pix.g; b += working_pix.b;
+	count++;
+
+	working_coords.x = mid_of_pixel_x;
+	working_coords.y = mid_of_pixel_y;
+	working_pix = Texel(texture, working_coords);
 	r += working_pix.r; g += working_pix.g; b += working_pix.b;
-	count += 2;
+	count++;
 
 	working_coords.x = end_of_pixel_x;
 	working_coords.y = end_of_pixel_y;
-	working_pix = Texel(texture, barrel_distortion(working_coords));
+	working_pix = Texel(texture, working_coords);
 	r += working_pix.r; g += working_pix.g; b += working_pix.b;
-	r += working_pix.r; g += working_pix.g; b += working_pix.b;
-	count += 2;
+	count++;
 
 	// average
 	r /= count; g /= count; b /= count;
@@ -183,7 +196,7 @@ vec4 pixel_bleed(vec4 rgb, Image texture, vec2 pixel_coords)
 extern bool scanline_enabled = true;
 
 // Opacity of the scanlines, 0 to 1.
-extern float scanline_opacity = 0.37;
+extern float scanline_opacity = 0.3;
 
 // How much space each line takes
 extern float square_scanline_width = 0.5;
