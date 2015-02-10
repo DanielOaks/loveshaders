@@ -60,7 +60,6 @@ end
 
 function screen_stencil()
     rwrc(5, 5, love.graphics.getWidth() - 10, love.graphics.getHeight() - 10, 15)
-    -- love.graphics.rectangle('fill', love.graphics.getWidth() / 2, love.graphics.getHeight() / 2, love.graphics.getWidth() / 2, love.graphics.getHeight() / 2)
 end
 
 
