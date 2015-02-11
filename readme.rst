@@ -20,11 +20,11 @@ CRT Curve
 
 Square pixels
 
-.. image:: http://i.imgur.com/PlsnfK3.png
+.. image:: http://i.imgur.com/Paw43E1.png
 
 Non-square pixels
 
-.. image:: http://i.imgur.com/ypjFVRT.png
+.. image:: http://i.imgur.com/GbaS48q.png
 
 Chromatic Aberration
 

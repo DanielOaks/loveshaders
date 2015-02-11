@@ -105,11 +105,11 @@ vec4 pixel_bleed(vec4 rgb, Image texture, vec2 pixel_coords)
 	float end_of_pixel_y;
 
 	if (square_pixels) {
-		start_of_pixel_x = (float(int((pixel_coords.x * love_ScreenSize.x) / pixel_size)) + 0.1) * float(pixel_size) / float(love_ScreenSize.x);
-		end_of_pixel_x = (float(int((pixel_coords.x * love_ScreenSize.x) / pixel_size)) + 0.9) * float(pixel_size) / float(love_ScreenSize.x);
+		start_of_pixel_x = (float(int((pixel_coords.x * love_ScreenSize.x) / pixel_size)) + 0.2) * float(pixel_size) / float(love_ScreenSize.x);
+		end_of_pixel_x = (float(int((pixel_coords.x * love_ScreenSize.x) / pixel_size)) + 0.8) * float(pixel_size) / float(love_ScreenSize.x);
 
-		start_of_pixel_y = (float(int((pixel_coords.y * love_ScreenSize.y) / pixel_size)) + 0.1) * float(pixel_size) / float(love_ScreenSize.y);
-		end_of_pixel_y = (float(int((pixel_coords.y * love_ScreenSize.y) / pixel_size)) + 0.9) * float(pixel_size) / float(love_ScreenSize.y);
+		start_of_pixel_y = (float(int((pixel_coords.y * love_ScreenSize.y) / pixel_size)) + 0.2) * float(pixel_size) / float(love_ScreenSize.y);
+		end_of_pixel_y = (float(int((pixel_coords.y * love_ScreenSize.y) / pixel_size)) + 0.8) * float(pixel_size) / float(love_ScreenSize.y);
 
 	} else {
 		// from thing below
@@ -122,11 +122,11 @@ vec4 pixel_bleed(vec4 rgb, Image texture, vec2 pixel_coords)
 		}
 
 		// pixels
-		start_of_pixel_x = (float(int((pixel_coords.x * love_ScreenSize.x) / pixel_size)) + 0.1) * float(pixel_size) / float(love_ScreenSize.x);
-		end_of_pixel_x = (float(int((pixel_coords.x * love_ScreenSize.x) / pixel_size)) + 0.9) * float(pixel_size) / float(love_ScreenSize.x);
+		start_of_pixel_x = (float(int((pixel_coords.x * love_ScreenSize.x) / pixel_size)) + 0.2) * float(pixel_size) / float(love_ScreenSize.x);
+		end_of_pixel_x = (float(int((pixel_coords.x * love_ScreenSize.x) / pixel_size)) + 0.8) * float(pixel_size) / float(love_ScreenSize.x);
 
-		start_of_pixel_y = (float(int((pixel_coords.y * love_ScreenSize.y + (current_pixel_v * pixel_size * vertical_pixel_scale)) / (pixel_size * vertical_pixel_scale))) + 0.1) * float(pixel_size) * vertical_pixel_scale / float(love_ScreenSize.y);
-		end_of_pixel_y = (float(int((pixel_coords.y * love_ScreenSize.y + (current_pixel_v * pixel_size * vertical_pixel_scale)) / (pixel_size * vertical_pixel_scale))) + 0.9) * float(pixel_size) * vertical_pixel_scale / float(love_ScreenSize.y);
+		start_of_pixel_y = (float(int((pixel_coords.y * love_ScreenSize.y + (current_pixel_v * pixel_size * vertical_pixel_scale)) / (pixel_size * vertical_pixel_scale))) + 0.2) * float(pixel_size) * vertical_pixel_scale / float(love_ScreenSize.y);
+		end_of_pixel_y = (float(int((pixel_coords.y * love_ScreenSize.y + (current_pixel_v * pixel_size * vertical_pixel_scale)) / (pixel_size * vertical_pixel_scale))) + 0.8) * float(pixel_size) * vertical_pixel_scale / float(love_ScreenSize.y);
 	}
 	float mid_of_pixel_x = (start_of_pixel_x + end_of_pixel_x) / 2.0;
 	float mid_of_pixel_y = (start_of_pixel_y + end_of_pixel_y) / 2.0;
