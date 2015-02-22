@@ -25,6 +25,7 @@ function DaNTSC.new()
     self:disableChromaticAberration()
     self:disablePixelBleed()
     self:disableScanlines()
+    self:enableSquarePixels()
 
     -- creating shader object
     shaders_supported = love.graphics.isSupported and love.graphics.isSupported('canvas') and love.graphics.isSupported('shader')
@@ -125,6 +126,16 @@ function DaNTSC:disableBarrelDistort()
     self.enabled.barrel_distort = false
 end
 
+function DaNTSC:setSquarePixels(value)
+    self.enabled.square_pixels = value
+end
+function DaNTSC:enableSquarePixels()
+    self.enabled.square_pixels = true
+end
+function DaNTSC:disableSquarePixels()
+    self.enabled.square_pixels = false
+end
+
 function DaNTSC:setChromaticAberration(value)
     if value and not self.ca_init then
         self:initChromaticAberration()
@@ -169,6 +180,7 @@ function DaNTSC:pushSettings()
         self.shader:send('ca_enabled', self.enabled.chromatic_aberration)
         self.shader:send('pixel_bleed_enabled', self.enabled.pixel_bleed)
         self.shader:send('scanline_enabled', self.enabled.scanlines)
+        self.shader:send('square_pixels', self.enabled.square_pixels)
     end
 end
 

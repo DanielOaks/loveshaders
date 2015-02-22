@@ -7,9 +7,10 @@ DaNTSC = require 'shaders.dantsc'  -- mine!
 
 -- shader variables
 enable_scanlines = true
-enable_pixel_bleed = false
+enable_pixel_bleed = true
 enable_barrel_distort = true
 enable_chromatic_aberration = false
+square_pixels = true
 pixel_size = 3
 
 -- inside and outside shaders
@@ -25,6 +26,7 @@ inside_screen_effect:setScanlines(enable_scanlines)
 inside_screen_effect:setPixelBleed(enable_pixel_bleed)
 inside_screen_effect:setChromaticAberration(enable_chromatic_aberration)
 inside_screen_effect:setBarrelDistort(enable_barrel_distort)
+inside_screen_effect:setSquarePixels(square_pixels)
 inside_screen_effect:pushSettings()
 inside_screen_effect:setPixelSize(pixel_size)
 
@@ -152,9 +154,14 @@ function game:draw()
 
     -- print information
     love.graphics.setColor(245, 245, 245, 190)
-    rwrc(10, 10, 210, 50, 10)
+    rwrc(10, 10, 230, 118, 10)
     love.graphics.setColor(20, 20, 20)
     love.graphics.print([[[d] Enable / Disable Shaders
+[1] Toggle Monitor Distortion
+[2] Toggle Scanlines
+[3] Toggle Pixelate
+[4] Toggle Chromatic Aberration
+[s] Change Pixel Shape
 [esc] Exit]], 20, 20)
 
     -- shader error message
@@ -189,6 +196,10 @@ function game:keyreleased(key)
     elseif key == '4' then
         enable_chromatic_aberration = not enable_chromatic_aberration
         inside_screen_effect:setChromaticAberration(enable_chromatic_aberration)
+        inside_screen_effect:pushSettings()
+    elseif key == 's' then
+        square_pixels = not square_pixels
+        inside_screen_effect:setSquarePixels(square_pixels)
         inside_screen_effect:pushSettings()
     elseif key == 'up' then
         if enable_pixel_bleed then
