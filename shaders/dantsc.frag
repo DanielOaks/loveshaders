@@ -14,7 +14,7 @@ extern float pixel_size = 3.0;
 extern bool square_pixels = false;
 
 // how tall vertical pixels are, for non-square pixels
-extern float vertical_pixel_scale = 1.7;
+extern float vertical_pixel_scale = 1;
 
 
 /// Barrel Distortion
@@ -44,7 +44,7 @@ vec2 coords_neg1_1_to_glsl(vec2 point) {
 }
 
 // Takes a point (x, y) and returns the barrel-distorted position of that point
-//   x and y must be in the range (-1, 1)
+//   x and y must be in the range (0, 1)
 vec2 barrel_distortion(vec2 point)
 {
 	if (barrel_enabled) {
