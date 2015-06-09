@@ -16,13 +16,13 @@ function create_shaders()
     grading.grade = {0.975, 1.025, 1.000}
 
     local pixelate = Shine.pixelate()
-    pixelate:set('pixel_size', pixel_size)
+    pixelate.pixel_size = pixel_size
 
     local blur = Shine.gaussianblur()
     blur.sigma = 0.5 * (pixel_size / 3)
 
     local scanlines = Shine.scanlines()
-    scanlines:set('pixel_size', pixel_size)
+    scanlines.pixel_size = pixel_size
 
     local vignette = Shine.vignette()
     vignette.radius = 1.5
