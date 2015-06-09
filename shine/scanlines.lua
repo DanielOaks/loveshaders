@@ -27,10 +27,10 @@ requires = {'canvas', 'shader'},
 description = "Scanlines",
 
 new = function(self)
-	self.pixel_size = 3
-	self.opacity = 0.3
-	self.center_fade = 0.44
-	self.line_height = 0.35
+	self._pixel_size = 3
+	self._opacity = 0.3
+	self._center_fade = 0.44
+	self._line_height = 0.35
 
 	self.canvas = love.graphics.newCanvas()
 	self.shader = love.graphics.newShader[[
@@ -95,10 +95,10 @@ new = function(self)
 		return working_rgb;
 	}
 	]]
-	self.shader:send("pixel_size", self.pixel_size)
-	self.shader:send("opacity", self.opacity)
-	self.shader:send("center_fade", self.center_fade)
-	self.shader:send("scanline_height", self.line_height)
+	self.shader:send("pixel_size", self._pixel_size)
+	self.shader:send("opacity", self._opacity)
+	self.shader:send("center_fade", self._center_fade)
+	self.shader:send("scanline_height", self._line_height)
 end,
 
 draw = function(self, func)
@@ -108,19 +108,19 @@ end,
 set = function(self, key, value)
 	if key == "pixel_size" then
 		assert(type(value) == "number")
-		self.pixel_size = value
+		self._pixel_size = value
 		self.shader:send("pixel_size", value)
 	elseif key == "opacity" then
 		assert(type(value) == "number")
-		self.opacity = value
+		self._opacity = value
 		self.shader:send("opacity", value)
 	elseif key == "center_fade" then
 		assert(type(value) == "number")
-		self.center_fade = value
+		self._center_fade = value
 		self.shader:send("center_fade", value)
 	elseif key == "line_height" then
 		assert(type(value) == "number")
-		self.line_height = value
+		self._line_height = value
 		self.shader:send("line_height", value)
 	else
 		error("Unknown property: " .. tostring(key))

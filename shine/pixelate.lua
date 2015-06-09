@@ -177,7 +177,7 @@ set = function(self, key, value)
 		self.shader = build_shader(self._add_original, self._samples)
 		self.shader:send("pixel_size", self._pixel_size)
 	elseif key == "add_original" then
-		assert(type(value) == "bool")
+		assert(type(value) == "boolean")
 		self._add_original = value
 		self.shader = build_shader(self._add_original, self._samples)
 		self.shader:send("pixel_size", self._pixel_size)
