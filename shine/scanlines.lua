@@ -24,7 +24,7 @@ SOFTWARE.
 
 return {
 requires = {'canvas', 'shader'},
-description = "Scanlines and pixel blurring",
+description = "Scanlines",
 
 new = function(self)
 	self.pixel_size = 3
