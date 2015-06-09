@@ -27,10 +27,10 @@ requires = {'canvas', 'shader'},
 description = "Scanlines and pixel blurring",
 
 new = function(self)
-	self.pixel_size = 10
+	self.pixel_size = 3
 	self.opacity = 0.3
-	self.center_fade = 0.5
-	self.line_width = 0.5
+	self.center_fade = 0.44
+	self.line_height = 0.35
 
 	self.canvas = love.graphics.newCanvas()
 	self.shader = love.graphics.newShader[[
@@ -42,8 +42,8 @@ new = function(self)
 	extern float opacity;
 	// How much scanlines 'fade out' in the center of the screen
 	extern float center_fade;
-	// How much space each line takes
-	extern float scanline_width;
+	// How much of each pixel is scanline, 0 to 1.
+	extern float scanline_height;
 
 	// input coords 0 -> 1,
 	//   return coords -1 -> 1
@@ -66,28 +66,28 @@ new = function(self)
 
 		// horizontal scanlines
 		float current_pixel_v = pixel_coords.y / pixel_size;
-		float scanline_is_active = cos(current_pixel_v * 2 * PI) + scanline_width;
+		float scanline_is_active = cos(current_pixel_v * 2.0 * PI) - 1.0 + scanline_height * 3.0;
 
 		// clamp
 		if (scanline_is_active > 1.0) {
 			scanline_is_active = 1.0;
 		}
 
-		/*// fading towards the center, looks much better
-		vec2 fade_coords = coords_glsl_to_neg1_1(pixel_coords);
+		// fading towards the center, looks much better
+		vec2 fade_coords = coords_glsl_to_neg1_1(texture_coords);
 		float fade_value = ((1.0 - abs(fade_coords.x)) + (1.0 - abs(fade_coords.y))) / 2.0;
 
-		scanline_is_active -= fade_value * center_fade;*/
+		scanline_is_active -= fade_value * center_fade;
 
+		// clamp
 		if (scanline_is_active < 0.0) {
 			scanline_is_active = 0.0;
 		}
 
-		working_rgb = desaturate(working_rgb, scanline_is_active); // * 0.07);
-
 		// eh, just implement as lowering alpha for now
 		// see if we should be modifying rgb values instead
 		// possibly by making it darker and less saturated in the scanlines?
+		working_rgb = desaturate(working_rgb, scanline_is_active * 0.07);
 		working_rgb.r = working_rgb.r - (scanline_is_active * opacity);
 		working_rgb.g = working_rgb.g - (scanline_is_active * opacity);
 		working_rgb.b = working_rgb.b - (scanline_is_active * opacity);
@@ -97,8 +97,8 @@ new = function(self)
 	]]
 	self.shader:send("pixel_size", self.pixel_size)
 	self.shader:send("opacity", self.opacity)
-	-- self.shader:send("center_fade", self.center_fade)
-	self.shader:send("scanline_width", self.line_width)
+	self.shader:send("center_fade", self.center_fade)
+	self.shader:send("scanline_height", self.line_height)
 end,
 
 draw = function(self, func)
@@ -106,20 +106,22 @@ draw = function(self, func)
 end,
 
 set = function(self, key, value)
-	if key == "x" then
+	if key == "pixel_size" then
 		assert(type(value) == "number")
-		self.x_distortion = value
-		self.shader:send("x_distortion", value)
-	elseif key == "y" then
+		self.pixel_size = value
+		self.shader:send("pixel_size", value)
+	elseif key == "opacity" then
 		assert(type(value) == "number")
-		self.y_distortion = value
-		self.shader:send("y_distortion", value)
-	elseif key == "draw_outline" then
-		assert(type(value) == "bool")
-		self.draw_outline = value
-	elseif key == "outline" then
-		assert(type(value) == "table")
-		self.outline = value
+		self.opacity = value
+		self.shader:send("opacity", value)
+	elseif key == "center_fade" then
+		assert(type(value) == "number")
+		self.center_fade = value
+		self.shader:send("center_fade", value)
+	elseif key == "line_height" then
+		assert(type(value) == "number")
+		self.line_height = value
+		self.shader:send("line_height", value)
 	else
 		error("Unknown property: " .. tostring(key))
 	end
