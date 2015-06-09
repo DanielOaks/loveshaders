@@ -5,6 +5,8 @@
 Gamestate = require 'libs.gamestate'  -- hump
 Shine = require 'shine'  -- shaders
 
+pixel_size = 3
+
 -- inside and outside shaders
 function create_shaders()
     local chroma = Shine.separate_chroma()
@@ -13,11 +15,14 @@ function create_shaders()
     local grading = Shine.colorgradesimple()
     grading.grade = {0.975, 1.025, 1.000}
 
+    local pixelate = Shine.pixelate()
+    pixelate:set('pixel_size', pixel_size)
+
     local blur = Shine.gaussianblur()
-    blur.sigma = 0.9
+    blur.sigma = 0.5 * (pixel_size / 3)
 
     local scanlines = Shine.scanlines()
-    scanlines.pixel_size = 5
+    scanlines:set('pixel_size', pixel_size)
 
     local vignette = Shine.vignette()
     vignette.radius = 1.5
@@ -29,7 +34,7 @@ function create_shaders()
     barrel.y = 0.035
 
     outside_screen_effect = chroma:chain(grading):chain(blur):chain(vignette)
-    inside_screen_effect = chroma:chain(grading):chain(blur):chain(scanlines):chain(vignette):chain(barrel)
+    inside_screen_effect = chroma:chain(grading):chain(pixelate):chain(blur):chain(scanlines):chain(vignette):chain(barrel)
 end
 
 -- globals

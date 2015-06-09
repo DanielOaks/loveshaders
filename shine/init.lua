@@ -89,6 +89,7 @@ end
 return setmetatable({}, {__index = function(self, key)
 	local ok, effect = pcall(require, BASE .. "." .. key)
 	if not ok then
+		print('  error: '..effect)
 		error("No such effect: "..key, 2)
 	end
 
