@@ -2,9 +2,9 @@
 -- for löve2d 0.9.1
 -- by Daniel Oaks <danneh@danneh.net>
 -- released into the Public Domain - feel free to hack and redistribute this as much as you want
-Gamestate = require 'libs.gamestate'  -- hump
 Shine = require 'shine'  -- shaders
 
+enable_shaders = true
 pixel_size = 3
 
 -- inside and outside shaders
@@ -62,37 +62,6 @@ function screen_stencil()
     rwrc(5, 5, love.graphics.getWidth() - 10, love.graphics.getHeight() - 10, 15)
 end
 
-
--- extra Gamestate functions
-function love.resize(w, h)
-    Gamestate.resize(w, h)
-    create_shaders()
-end
-
-
--- Gamestates
-game = {}
-
-
--- löve functions
-function love.load()
-    -- setup everything we need
-    math.randomseed(os.time())  -- seed random number generator
-    Gamestate.registerEvents()
-    Gamestate.switch(game)
-    create_shaders()
-end
-
-
--- gs game
-function game:enter()
-    gen_example_image()
-
-    -- graphics setup
-    love.graphics.setPointStyle('smooth')
-end
-
-
 function gen_example_image()
     miku = love.graphics.newImage('images/miku.png')
 
@@ -108,14 +77,40 @@ function gen_example_image()
 end
 
 
-function game:draw()
+-- löve functions
+function love.load()
+    -- setup everything we need
+    math.randomseed(os.time())  -- seed random number generator
+    create_shaders()
+    gen_example_image()
+
+    -- graphics setup
+    love.graphics.setPointStyle('smooth')
+end
+
+function love.resize(w, h)
+    gen_example_image()
+    create_shaders()  -- otherwise shaders get messed up
+end
+
+
+local function draw_stuff()
+    love.graphics.rectangle('fill', 0, 0, love.graphics.getWidth(), love.graphics.getHeight())
+
+    love.graphics.draw(miku, (love.graphics.getWidth() - (miku:getWidth() * miku_scale)) / 2, (love.graphics.getHeight() - (miku:getHeight() * miku_scale)) / 2, 0, miku_scale, miku_scale)
+end
+
+
+function love.draw()
     -- drawing inside screen
     love.graphics.setColor(255, 255, 255)
-    inside_screen_effect:draw(function()
-        love.graphics.rectangle('fill', 0, 0, love.graphics.getWidth(), love.graphics.getHeight())
-
-        love.graphics.draw(miku, (love.graphics.getWidth() - (miku:getWidth() * miku_scale)) / 2, (love.graphics.getHeight() - (miku:getHeight() * miku_scale)) / 2, 0, miku_scale, miku_scale)
-    end)
+    if enable_shaders then
+        inside_screen_effect:draw(function()
+            draw_stuff()
+        end)
+    else
+        draw_stuff()
+    end
 
     -- -- drawing bezel
     -- love.graphics.setColor(35, 35, 45)
@@ -127,64 +122,32 @@ function game:draw()
 
     -- print information
     love.graphics.setColor(245, 245, 245, 190)
-    rwrc(10, 10, 230, 118, 10)
+    rwrc(10, 10, 230, 102, 10)
     love.graphics.setColor(20, 20, 20)
     love.graphics.print([[[d] Enable / Disable Shaders
-[1] Toggle Monitor Distortion
-[2] Toggle Scanlines
-[3] Toggle Pixelate
-[4] Toggle Chromatic Aberration
-[s] Change Pixel Shape
-[esc] Exit]], 20, 20)
+[up] Increase pixel size
+[down] Decrease pixel size
+[esc] Exit
+
+Pixel Size: ]]..pixel_size, 20, 20)
 end
 
 
-function game:keyreleased(key)
+function love.keyreleased(key)
     if key == 'escape' then
         love.event.quit()
     elseif key == 'd' then
         enable_shaders = not enable_shaders
-    elseif key == '1' then
-        enable_barrel_distort = not enable_barrel_distort
-        inside_screen_effect:setBarrelDistort(enable_barrel_distort)
-        inside_screen_effect:pushSettings()
-        outside_screen_effect:setBarrelDistort(enable_barrel_distort)
-        outside_screen_effect:pushSettings()
-    elseif key == '2' then
-        enable_scanlines = not enable_scanlines
-        inside_screen_effect:setScanlines(enable_scanlines)
-        inside_screen_effect:pushSettings()
-    elseif key == '3' then
-        enable_pixel_bleed = not enable_pixel_bleed
-        inside_screen_effect:setPixelBleed(enable_pixel_bleed)
-        inside_screen_effect:pushSettings()
-    elseif key == '4' then
-        enable_chromatic_aberration = not enable_chromatic_aberration
-        inside_screen_effect:setChromaticAberration(enable_chromatic_aberration)
-        inside_screen_effect:pushSettings()
-    elseif key == 's' then
-        square_pixels = not square_pixels
-        inside_screen_effect:setSquarePixels(square_pixels)
-        inside_screen_effect:pushSettings()
     elseif key == 'up' then
-        if enable_pixel_bleed then
-            pixel_size = pixel_size + 1
-            inside_screen_effect:setPixelSize(pixel_size)
-        end
+        pixel_size = pixel_size + 1
+        create_shaders()
     elseif key == 'down' then
-        if enable_pixel_bleed then
-            pixel_size = pixel_size - 1
-            if pixel_size < 1 then
-                pixel_size = 1
-            end
-            inside_screen_effect:setPixelSize(pixel_size)
+        pixel_size = pixel_size - 1
+        if pixel_size < 1 then
+            pixel_size = 1
         end
+        create_shaders()
     else
         print('key pressed: ' .. key)
     end
-end
-
-
-function game:resize(w, h)
-    gen_example_image()
 end
